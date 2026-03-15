@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Handy weglegen</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --s0-from: #1a1a2e; --s0-to: #16213e;
+      --s1-from: #0f3460; --s1-to: #533483;
+      --s2-from: #e94560; --s2-to: #c62a47;
+      --s3-from: #06447a; --s3-to: #0a7abf;
+      --s4-from: #1b5e20; --s4-to: #2e7d32;
+      --s5-from: #4a148c; --s5-to: #7b1fa2;
+      --s6-from: #e65100; --s6-to: #f57c00;
+      --s7-from: #00695c; --s7-to: #00897b;
+      --s8-from: #263238; --s8-to: #37474f;
+    }
+
+    html, body {
+      height: 100%; width: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: #000;
+    }
+
+    #deck {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 32px 120px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateY(40px) scale(0.97);
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0) scale(1);
+    }
+
+    .slide.exit-up {
+      opacity: 0;
+      transform: translateY(-40px) scale(0.97);
+    }
+
+    .slide.exit-down {
+      opacity: 0;
+      transform: translateY(40px) scale(0.97);
+    }
+
+    /* Gradient backgrounds */
+    .slide:nth-child(1) { background: linear-gradient(160deg, var(--s0-from), var(--s0-to)); }
+    .slide:nth-child(2) { background: linear-gradient(160deg, var(--s1-from), var(--s1-to)); }
+    .slide:nth-child(3) { background: linear-gradient(160deg, var(--s2-from), var(--s2-to)); }
+    .slide:nth-child(4) { background: linear-gradient(160deg, var(--s3-from), var(--s3-to)); }
+    .slide:nth-child(5) { background: linear-gradient(160deg, var(--s4-from), var(--s4-to)); }
+    .slide:nth-child(6) { background: linear-gradient(160deg, var(--s5-from), var(--s5-to)); }
+    .slide:nth-child(7) { background: linear-gradient(160deg, var(--s6-from), var(--s6-to)); }
+    .slide:nth-child(8) { background: linear-gradient(160deg, var(--s7-from), var(--s7-to)); }
+    .slide:nth-child(9) { background: linear-gradient(160deg, var(--s8-from), var(--s8-to)); }
+
+    .slide-icon {
+      font-size: 80px;
+      line-height: 1;
+      margin-bottom: 28px;
+      display: block;
+      animation: none;
+    }
+
+    .slide.active .slide-icon {
+      animation: iconPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+    }
+
+    @keyframes iconPop {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .slide-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 12px;
+    }
+
+    .slide-title {
+      font-size: clamp(24px, 7vw, 32px);
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .slide-body {
+      font-size: clamp(15px, 4.5vw, 18px);
+      color: rgba(255,255,255,0.85);
+      text-align: center;
+      line-height: 1.6;
+      max-width: 340px;
+    }
+
+    .slide-body strong {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .highlight-box {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 340px;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat {
+      font-size: clamp(42px, 14vw, 64px);
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -2px;
+      line-height: 1;
+      margin: 8px 0;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+      font-weight: 500;
+    }
+
+    .pill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 340px;
+      margin-top: 20px;
+    }
+
+    .pill {
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 50px;
+      padding: 12px 20px;
+      color: rgba(255,255,255,0.9);
+      font-size: 15px;
+      font-weight: 500;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill .pill-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* Animate pills in staggered on active */
+    .slide.active .pill:nth-child(1) { animation: slideInPill 0.4s ease 0.2s both; }
+    .slide.active .pill:nth-child(2) { animation: slideInPill 0.4s ease 0.35s both; }
+    .slide.active .pill:nth-child(3) { animation: slideInPill 0.4s ease 0.5s both; }
+    .slide.active .pill:nth-child(4) { animation: slideInPill 0.4s ease 0.65s both; }
+
+    @keyframes slideInPill {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .slide.active .slide-tag   { animation: fadeUp 0.5s ease 0.05s both; }
+    .slide.active .slide-title { animation: fadeUp 0.5s ease 0.1s both; }
+    .slide.active .slide-body  { animation: fadeUp 0.5s ease 0.2s both; }
+    .slide.active .highlight-box { animation: fadeUp 0.5s ease 0.3s both; }
+    .slide.active .stat        { animation: fadeUp 0.5s ease 0.25s both; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Pulsing dot for last slide */
+    .pulse-ring {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .pulse-ring::before, .pulse-ring::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      animation: pulseRing 2s ease-out infinite;
+    }
+    .pulse-ring::after { animation-delay: 1s; }
+
+    @keyframes pulseRing {
+      0%   { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    /* Navigation */
+    #nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 20px 32px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+
+    #dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      transition: all 0.3s ease;
+    }
+
+    .dot.active {
+      width: 20px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.9);
+    }
+
+    #btn-next {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 50px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 12px 28px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.2px;
+    }
+
+    #btn-next:active {
+      transform: scale(0.95);
+      background: rgba(255,255,255,0.3);
+    }
+
+    #btn-skip {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 8px 4px;
+      letter-spacing: 0.2px;
+    }
+
+    #btn-skip:active { color: rgba(255,255,255,0.8); }
+
+    /* Particles bg for first slide */
+    #particles {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      animation: floatParticle linear infinite;
+    }
+
+    @keyframes floatParticle {
+      from { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      to   { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Quote style */
+    .quote {
+      font-size: clamp(17px, 5vw, 20px);
+      font-style: italic;
+      color: rgba(255,255,255,0.9);
+      text-align: center;
+      line-height: 1.5;
+      max-width: 320px;
+      position: relative;
+      padding: 0 16px;
+    }
+
+    .quote::before {
+      content: '\201E';
+      font-size: 60px;
+      color: rgba(255,255,255,0.2);
+      position: absolute;
+      top: -20px; left: -8px;
+      font-style: normal;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- Slide 0: Hook -->
+  <div class="slide active">
+    <div id="particles"></div>
+    <span class="slide-icon">📱</span>
+    <div class="slide-tag">Das Problem</div>
+    <h1 class="slide-title">Dein Handy zerstört nicht deine Disziplin.</h1>
+    <p class="slide-body">Es zerstört deinen <strong>Dopamin-Rhythmus</strong>.</p>
+  </div>
+
+  <!-- Slide 1: Das Experiment -->
+  <div class="slide">
+    <span class="slide-icon">🔬</span>
+    <div class="slide-tag">Das Experiment</div>
+    <h1 class="slide-title">10 Tage. Ein Lehrer. Ein Ergebnis.</h1>
+    <div class="highlight-box" style="text-align:center">
+      <div class="stat">−50%</div>
+      <div class="stat-label">weniger Handy-Nutzung in 10 Tagen</div>
+    </div>
+    <p class="slide-body" style="margin-top:20px">Ohne Apps. Ohne Verbote. Ohne Willenskraft.</p>
+  </div>
+
+  <!-- Slide 2: Warum -->
+  <div class="slide">
+    <span class="slide-icon">🧠</span>
+    <div class="slide-tag">Warum es passiert</div>
+    <h1 class="slide-title">Du bist nicht schwach.</h1>
+    <p class="slide-body">Dein Nervensystem hat ein <strong>Muster gelernt</strong>: Es giert nach winzigen Stimulationsschüben.</p>
+    <div class="pill-list">
+      <div class="pill"><span class="pill-icon">❌</span> Apps löschen hilft nicht</div>
+      <div class="pill"><span class="pill-icon">❌</span> Mehr Disziplin hilft nicht</div>
+      <div class="pill"><span class="pill-icon">✅</span> Den Reflex unterbrechen hilft</div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Methode 1 -->
+  <div class="slide">
+    <span class="slide-icon">🗣️</span>
+    <div class="slide-tag">Methode 1 von 4</div>
+    <h1 class="slide-title">Sprich es laut aus.</h1>
+    <p class="slide-body">Bevor du greifst, sage laut:</p>
+    <div class="highlight-box">
+      <p style="color:rgba(255,255,255,0.9); font-size:16px; line-height:1.6; text-align:center">
+        <em>„Ich checke eine Nachricht."</em><br>
+        <em>„Ich suche eine Datei."</em>
+      </p>
+    </div>
+    <p class="slide-body" style="margin-top:16px">Klingt es dumm? Dein <strong>präfrontaler Kortex</strong> wacht auf — Selbstbeherrschung aktiviert.</p>
+  </div>
+
+  <!-- Slide 4: Methode 2 -->
+  <div class="slide">
+    <span class="slide-icon">⏱️</span>
+    <div class="slide-tag">Methode 2 von 4</div>
+    <h1 class="slide-title">Zähle bis zehn.</h1>
+    <p class="slide-body">Jedes Mal, wenn deine Hand greift:</p>
+    <div class="pill-list">
+      <div class="pill"><span class="pill-icon">✋</span> Halte inne</div>
+      <div class="pill"><span class="pill-icon">👀</span> Schau auf den Bildschirm</div>
+      <div class="pill"><span class="pill-icon">🔢</span> Zähle bis zehn</div>
+    </div>
+    <div class="quote" style="margin-top:20px; font-size:14px; color:rgba(255,255,255,0.8)">
+      „Kannst du warten, hast du die Kontrolle. Wenn nicht — hat sie dein Nervensystem."
+    </div>
+  </div>
+
+  <!-- Slide 5: Methode 3 -->
+  <div class="slide">
+    <span class="slide-icon">👜</span>
+    <div class="slide-tag">Methode 3 von 4</div>
+    <h1 class="slide-title">Abstand schafft Freiheit.</h1>
+    <div class="highlight-box" style="text-align:center">
+      <div class="stat">30%</div>
+      <div class="stat-label">weniger Kontrollverhalten durch 0,5 m Abstand</div>
+    </div>
+    <p class="slide-body" style="margin-top:16px">Handy tief in die Tasche. Nicht auf den Tisch. <strong>Der Impuls verblasst schneller als die Anstrengung, danach zu greifen.</strong></p>
+  </div>
+
+  <!-- Slide 6: Methode 4 -->
+  <div class="slide">
+    <span class="slide-icon">🚶</span>
+    <div class="slide-tag">Methode 4 von 4</div>
+    <h1 class="slide-title">Schütze deine Übergangsmomente.</h1>
+    <p class="slide-body">Die größten Suchtzonen sind nicht lange Sessions. Es sind die Mikromomente:</p>
+    <div class="pill-list">
+      <div class="pill"><span class="pill-icon">🚪</span> Zwischen zwei Räumen</div>
+      <div class="pill"><span class="pill-icon">🛗</span> Fahrstuhlfahrten</div>
+      <div class="pill"><span class="pill-icon">🛒</span> Warten in der Schlange</div>
+    </div>
+    <p class="slide-body" style="margin-top:16px">Lass die Langeweile zurückkommen. <strong>Mit ihr kommt das Denken.</strong></p>
+  </div>
+
+  <!-- Slide 7: Ergebnisse -->
+  <div class="slide">
+    <span class="slide-icon">✨</span>
+    <div class="slide-tag">Die Ergebnisse</div>
+    <h1 class="slide-title">Was sich in 10 Tagen verändert.</h1>
+    <div class="pill-list">
+      <div class="pill"><span class="pill-icon">🎯</span> Aufmerksamkeit stabilisiert</div>
+      <div class="pill"><span class="pill-icon">😌</span> Angstempfinden sinkt</div>
+      <div class="pill"><span class="pill-icon">💡</span> Mentale Klarheit steigt</div>
+    </div>
+    <p class="slide-body" style="margin-top:20px">Das Gehirn <strong>synchronisiert seinen Belohnungsrhythmus neu</strong>. Keine Entbehrung — Neukalibrierung.</p>
+  </div>
+
+  <!-- Slide 8: Fazit -->
+  <div class="slide">
+    <div class="pulse-ring">
+      <span style="font-size:48px">🧘</span>
+    </div>
+    <div class="slide-tag">Das Fazit</div>
+    <h1 class="slide-title">Kein moralisches Versagen. Ein gelernter Reflex.</h1>
+    <p class="slide-body">Ändere den Reflex — das Verhalten folgt.<br><br>Kontrolliere das Zeitfenster für den Impuls und die Gewohnheit bricht <strong>von selbst zusammen.</strong></p>
+  </div>
+
+</div>
+
+<!-- Nav -->
+<nav id="nav">
+  <button id="btn-skip">Überspringen</button>
+  <div id="dots"></div>
+  <button id="btn-next">Weiter →</button>
+</nav>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dots   = document.getElementById('dots');
+  const btnNext = document.getElementById('btn-next');
+  const btnSkip = document.getElementById('btn-skip');
+  let current = 0;
+  const total = slides.length;
+
+  // Build dots
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    dots.appendChild(d);
+  }
+
+  function goTo(next, dir = 1) {
+    if (next < 0 || next >= total) return;
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add(dir > 0 ? 'exit-up' : 'exit-down');
+    setTimeout(() => slides[prev].classList.remove('exit-up', 'exit-down'), 500);
+
+    current = next;
+    slides[current].classList.add('active');
+
+    dots.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+
+    const isLast = current === total - 1;
+    btnNext.textContent = isLast ? 'Von vorne ↺' : 'Weiter →';
+    btnSkip.style.visibility = isLast ? 'hidden' : 'visible';
+  }
+
+  btnNext.addEventListener('click', () => {
+    if (current === total - 1) goTo(0, -1);
+    else goTo(current + 1, 1);
+  });
+
+  btnSkip.addEventListener('click', () => goTo(total - 1, 1));
+
+  // Touch / swipe
+  let touchStartY = 0, touchStartX = 0;
+
+  document.addEventListener('touchstart', e => {
+    touchStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    const dy = touchStartY - e.changedTouches[0].clientY;
+    const dx = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(dx) > Math.abs(dy)) return; // horizontal swipe ignore
+    if (Math.abs(dy) < 40) return;
+    if (dy > 0) goTo(current + 1, 1);
+    else goTo(current - 1, -1);
+  }, { passive: true });
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') goTo(current + 1, 1);
+    if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  goTo(current - 1, -1);
+  });
+
+  // Particles for first slide
+  const particlesEl = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 60 + 20;
+    p.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      left: ${Math.random() * 100}%;
+      animation-duration: ${Math.random() * 12 + 8}s;
+      animation-delay: ${Math.random() * -20}s;
+    `;
+    particlesEl.appendChild(p);
+  }
+</script>
+</body>
+</html>
